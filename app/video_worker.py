@@ -63,7 +63,7 @@ class VideoWorker(QThread):
         self._running = False
 
     def _open_new_segment(self, w, h):
-        fname = datetime.now().strftime("%Y%m%d_%H%M%S") + f"_{self.name}.mp4"
+        fname = datetime.now().strftime("%d-%m-%Y_%H-%M-%S") + f"_{self.name}.mp4"
         path = str(Path(self._record_folder) / fname)
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         writer = cv2.VideoWriter(path, fourcc, self._fps, (w, h))
@@ -80,14 +80,18 @@ class VideoWorker(QThread):
 
     def run(self):
         self._running = True
-        cap = cv2.VideoCapture(self.rtsp_url, cv2.CAP_FFMPEG)
-        # Without these, a stalled connection (socket open, no more data) blocks
-        # cap.read() forever: the thread never notices stop() was called, and
-        # if the app then exits/reconnects, Qt can tear down a QThread that is
-        # still running underneath, which crashes the process.
+        # These must be set before open() - once the connection attempt starts,
+        # setting them has no effect. Without a bound, a dead/stalled camera
+        # (socket open, no data, or unreachable) blocks the native connect/read
+        # call for minutes: the thread never notices stop() was called, it never
+        # emits disconnected() to trigger a reconnect, and if the app exits
+        # meanwhile, Qt can tear down a QThread that is still running underneath -
+        # which crashes the process.
+        cap = cv2.VideoCapture()
         cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
-        cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 2000)
-        if not cap.isOpened():
+        cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 3000)
+        opened = cap.open(self.rtsp_url, cv2.CAP_FFMPEG)
+        if not opened or not cap.isOpened():
             self.error.emit(f"Nu m-am putut conecta la {self.name}.")
             self.disconnected.emit()
             return
@@ -120,7 +124,8 @@ class VideoWorker(QThread):
                             self._record_folder, self._retention_value, self._retention_unit
                         )
                         self._open_new_segment(w, h)
-                    self._writer.write(frame)
+                    if self._writer is not None:
+                        self._writer.write(frame)
                 elif self._writer is not None:
                     self._writer.release()
                     self._writer = None

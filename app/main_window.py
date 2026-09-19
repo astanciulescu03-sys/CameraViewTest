@@ -18,7 +18,7 @@ from app.tray import TrayIcon
 from app.video_worker import VideoWorker
 
 CLEANUP_INTERVAL_MS = 60 * 60 * 1000  # re-check retention thresholds hourly
-RECONNECT_DELAY_MS = 5000  # retry a dropped feed automatically, unattended-camera style
+RECONNECT_DELAY_MS = 15000  # retry a dropped feed automatically, unattended-camera style
 
 
 class MainWindow(QMainWindow):
@@ -132,7 +132,7 @@ class MainWindow(QMainWindow):
         worker = self.worker
         self.worker = None
         worker.stop()
-        worker.wait(4000)
+        worker.wait(6000)
         self.video_label.setPixmap(QPixmap())
         self.status_label.setText("")
 

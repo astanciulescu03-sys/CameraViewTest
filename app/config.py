@@ -5,6 +5,7 @@ from app.camera import Camera
 
 CONFIG_DIR = Path.home() / ".camerax"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+BACKUP_FILE = CONFIG_DIR / "config.json.bak"
 
 
 class Config:
@@ -16,19 +17,27 @@ class Config:
         self.overlay_position = "bottom-right"
         self.load()
 
+    def _apply(self, data):
+        self.cameras = [Camera.from_dict(c) for c in data.get("cameras", [])]
+        self.default_record_folder = data.get(
+            "default_record_folder", self.default_record_folder
+        )
+        self.active_camera_name = data.get("active_camera_name")
+        self.overlay_enabled = data.get("overlay_enabled", self.overlay_enabled)
+        self.overlay_position = data.get("overlay_position", self.overlay_position)
+
     def load(self):
-        if CONFIG_FILE.exists():
+        # Try the main file first, then fall back to the last known-good backup
+        # (e.g. a power loss mid-save left config.json truncated/corrupted).
+        for path in (CONFIG_FILE, BACKUP_FILE):
+            if not path.exists():
+                continue
             try:
-                data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
-                self.cameras = [Camera.from_dict(c) for c in data.get("cameras", [])]
-                self.default_record_folder = data.get(
-                    "default_record_folder", self.default_record_folder
-                )
-                self.active_camera_name = data.get("active_camera_name")
-                self.overlay_enabled = data.get("overlay_enabled", self.overlay_enabled)
-                self.overlay_position = data.get("overlay_position", self.overlay_position)
+                data = json.loads(path.read_text(encoding="utf-8"))
+                self._apply(data)
+                return
             except Exception:
-                self.cameras = []
+                continue
 
     def save(self):
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -39,7 +48,21 @@ class Config:
             "overlay_enabled": self.overlay_enabled,
             "overlay_position": self.overlay_position,
         }
-        CONFIG_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        text = json.dumps(data, indent=2, ensure_ascii=False)
+
+        # Keep the last good config as a backup before touching the real file.
+        if CONFIG_FILE.exists():
+            try:
+                CONFIG_FILE.replace(BACKUP_FILE)
+            except OSError:
+                pass
+
+        # Write to a temp file and rename it into place - a rename is a single
+        # filesystem operation, so a power loss mid-save can't leave config.json
+        # half-written/truncated the way writing to it directly could.
+        tmp_file = CONFIG_FILE.with_suffix(".tmp")
+        tmp_file.write_text(text, encoding="utf-8")
+        tmp_file.replace(CONFIG_FILE)
 
     def add_camera(self, camera: Camera):
         self.cameras.append(camera)
