@@ -106,12 +106,21 @@ class AddCameraDialog(QDialog):
         self.result_name = None
         self.result_folder = None
         self.result_ip = ""
+        self.result_onvif_port = 80
+        self.result_onvif_username = ""
+        self.result_onvif_password = ""
         self.result_retention_value = 3
         self.result_retention_unit = "days"
 
         if prefill:
             self.ip_edit.setText(prefill.get("ip", ""))
             self.name_edit.setText(prefill.get("name", ""))
+            if prefill.get("onvif_port"):
+                self.onvif_port_edit.setText(str(prefill["onvif_port"]))
+            if prefill.get("onvif_username"):
+                self.user_edit.setText(prefill["onvif_username"])
+            if prefill.get("onvif_password"):
+                self.pass_edit.setText(prefill["onvif_password"])
             if prefill.get("rtsp_url"):
                 self.rtsp_edit.setText(prefill["rtsp_url"])
                 self.tabs.setCurrentIndex(1)
@@ -184,6 +193,12 @@ class AddCameraDialog(QDialog):
         self.result_rtsp_url = rtsp
         self.result_folder = folder
         self.result_ip = self.ip_edit.text().strip()
+        try:
+            self.result_onvif_port = int(self.onvif_port_edit.text().strip() or "80")
+        except ValueError:
+            self.result_onvif_port = 80
+        self.result_onvif_username = self.user_edit.text().strip()
+        self.result_onvif_password = self.pass_edit.text()
         self.result_retention_value = self.retention_value.value()
         self.result_retention_unit = self.retention_unit.currentData()
         self.accept()

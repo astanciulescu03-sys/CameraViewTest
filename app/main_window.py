@@ -132,7 +132,7 @@ class MainWindow(QMainWindow):
         worker = self.worker
         self.worker = None
         worker.stop()
-        worker.wait(3000)
+        worker.wait(4000)
         self.video_label.setPixmap(QPixmap())
         self.status_label.setText("")
 

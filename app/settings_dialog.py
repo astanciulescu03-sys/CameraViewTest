@@ -117,6 +117,9 @@ class SettingsDialog(QDialog):
                 name=dlg.result_name,
                 rtsp_url=dlg.result_rtsp_url,
                 ip=dlg.result_ip,
+                onvif_port=dlg.result_onvif_port,
+                onvif_username=dlg.result_onvif_username,
+                onvif_password=dlg.result_onvif_password,
                 record_folder=dlg.result_folder,
                 retention_value=dlg.result_retention_value,
                 retention_unit=dlg.result_retention_unit,
@@ -131,6 +134,9 @@ class SettingsDialog(QDialog):
         prefill = {
             "name": cam.name,
             "ip": cam.ip,
+            "onvif_port": cam.onvif_port,
+            "onvif_username": cam.onvif_username,
+            "onvif_password": cam.onvif_password,
             "rtsp_url": cam.rtsp_url,
             "folder": cam.record_folder,
             "retention_value": cam.retention_value,
@@ -143,6 +149,9 @@ class SettingsDialog(QDialog):
             cam.name = dlg.result_name
             cam.rtsp_url = dlg.result_rtsp_url
             cam.ip = dlg.result_ip
+            cam.onvif_port = dlg.result_onvif_port
+            cam.onvif_username = dlg.result_onvif_username
+            cam.onvif_password = dlg.result_onvif_password
             cam.record_folder = dlg.result_folder
             cam.retention_value = dlg.result_retention_value
             cam.retention_unit = dlg.result_retention_unit
@@ -167,6 +176,9 @@ class SettingsDialog(QDialog):
                     name=add_dlg.result_name,
                     rtsp_url=add_dlg.result_rtsp_url,
                     ip=add_dlg.result_ip,
+                    onvif_port=add_dlg.result_onvif_port,
+                    onvif_username=add_dlg.result_onvif_username,
+                    onvif_password=add_dlg.result_onvif_password,
                     record_folder=add_dlg.result_folder,
                     retention_value=add_dlg.result_retention_value,
                     retention_unit=add_dlg.result_retention_unit,

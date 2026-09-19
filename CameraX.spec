@@ -1,4 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
+
+import onvif
 from PyInstaller.utils.hooks import collect_all
 
 datas = [("assets/icon.ico", "assets"), ("assets/icon.png", "assets")]
@@ -12,6 +15,14 @@ for pkg in ("onvif", "wsdiscovery", "zeep"):
     datas += pkg_datas
     binaries += pkg_binaries
     hiddenimports += pkg_hidden
+
+# onvif-zeep looks up its WSDL files at runtime relative to its own module
+# path: dirname(dirname(onvif/client.py)) + "/wsdl". In the installed package
+# that's a sibling of the "onvif" folder (site-packages/wsdl), so
+# collect_all("onvif") above never picks it up. Bundle it at the bundle root
+# so it lands at sys._MEIPASS/wsdl, matching what onvif expects when frozen.
+onvif_wsdl_dir = os.path.join(os.path.dirname(os.path.dirname(onvif.__file__)), "wsdl")
+datas.append((onvif_wsdl_dir, "wsdl"))
 
 a = Analysis(
     ["main.py"],
